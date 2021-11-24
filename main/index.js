@@ -65,7 +65,7 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-client.on('interactionCreate', interaction => {
+client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
 /*    console.log(interaction)
     console.log(interaction.customId)*/
@@ -75,41 +75,75 @@ client.on('interactionCreate', interaction => {
 
             client.channels.cache.get(interaction.channel.id).messages.fetch(interaction.message.id).then(message => message.delete());
 
-            const info = new MessageActionRow()
-                .addComponents(
-                    new MessageButton()
-                        .setLabel('Сайт сервера')
-                        .setURL('https://litweins.space/server/')
-                        .setStyle('LINK'),
-                );
+            let loading_embed = new MessageEmbed()
+                .setColor('BLUE')
+                .setDescription(`Загрузка... :arrows_counterclockwise:`)
 
-            let embed = new MessageEmbed()
-                .setColor('GREEN')
-                .setDescription(`Готово! Ник **\`${interaction.message.embeds[0].title}\`** добавлен в Whitelist!\nПриятной игры!`)
-            let channel = client.channels.cache.get(config.WHITELIST_CHANNEL)
+            let member = client.users.cache.get(interaction.user.id);
+            let loading_message_id = (await member.send({embeds: [loading_embed], ephemeral: true})).id
 
-            let rcon = new Rcon('141.95.53.180', 25575, 'R8IMStPXBxJv5Gy')
-            rcon.on('auth', function() {
-                console.log("Authenticated");
-                rcon.send(`list`)
-                console.log(`list ${interaction.message.embeds[0].title} ${interaction.user.id}`)
+            let rcon = new Rcon(config.SERVER_IP, config.SERVER_PORT, config.SERVER_PASSWORD)
+            await rcon.on('auth', async function() {
+                console.log("Connection established");
+                await rcon.send(`bwl add ${interaction.message.embeds[0].title} ${interaction.user.id}`)
 
             }).on('response', function(str) {
                 console.log("Response: " + str);
-                channel.send("`*Тип добавил, допилить надо*`")
+                client.channels.cache.get(interaction.channel.id).messages.fetch(loading_message_id).then(message => message.delete());
+
+                if (str === `**\`${interaction.message.embeds[0].title}\`** уже находится в Whitelist.`) {
+                    let embed = new MessageEmbed()
+                        .setColor('ORANGE')
+                        .setDescription('Никнейм '+str)
+                        .setFooter("Это сообщение исчезнет через 15 секунд")
+                    let member = client.users.cache.get(interaction.user.id);
+                    member.send({ embeds: [embed], ephemeral: true })
+                        .then((message)=>setTimeout(()=>message.delete(),15000));
+
+                } else if (str === 'error') {
+                    let embed = new MessageEmbed()
+                        .setColor('RED')
+                        .setDescription(':interrobang: Что-то пошло не так...')
+                        .setFooter('-1')
+                    let member = client.users.cache.get(interaction.user.id);
+                    member.send({ embeds: [embed], ephemeral: true })
+                        .then((message)=>setTimeout(()=>message.delete(),15000));
+                } else {
+                    let embed = new MessageEmbed()
+                        .setColor('GREEN')
+                        .setDescription(str)
+                        .setFooter("Это сообщение исчезнет через 15 секунд")
+                    let member = client.users.cache.get(interaction.user.id);
+                    member.send({ embeds: [embed], ephemeral: true })
+                        .then((message)=>setTimeout(()=>message.delete(),15000));
+                    let channel_embed = new MessageEmbed()
+                        .addFields(
+                            { name: 'Discord Name', value: `<@${interaction.user.id}>`, inline: true },
+                            { name: 'ID', value: `${interaction.user.id}`, inline: true },
+                        )
+                        .setColor('GREEN')
+                        .setDescription(str)
+                    let channel = client.channels.cache.get(config.WHITELIST_CHANNEL)
+                    channel.send({embeds: [channel_embed]})
+                }
+                rcon.disconnect();
+
             }).on('error', function(err) {
                 console.log("Error: " + err);
+                client.channels.cache.get(interaction.channel.id).messages.fetch(loading_message_id).then(message => message.delete());
+
+                let embed = new MessageEmbed()
+                    .setColor('RED')
+                    .setDescription(`Произошла ошибка. Попробуйте ещё раз.`)
+                    .setFooter('0')
+                let member = client.users.cache.get(interaction.user.id);
+                member.send({ embeds: [embed], ephemeral: true })
+                    .then((message)=>setTimeout(()=>message.delete(),15000));
             }).on('end', function() {
                 console.log("Connection closed");
-                process.exit();
             });
+            await rcon.connect();
 
-            rcon.connect();
-
-
-
-            let member = client.users.cache.get(interaction.user.id);
-            member.send({ embeds: [embed], components: [info], ephemeral: true });
         }
         if (interaction.customId === 'deny_rules') {
             client.channels.cache.get(interaction.channel.id).messages.fetch(interaction.message.id).then(message => message.delete());
@@ -118,8 +152,11 @@ client.on('interactionCreate', interaction => {
         let embed = new MessageEmbed()
             .setColor('DARK_RED')
             .setDescription(`Произошла ошибка. Попробуйте ещё раз.`)
+            .setFooter('1')
         let member = client.users.cache.get(interaction.user.id);
-        member.send({ embeds: [embed], ephemeral: true });
+        await member.send({embeds: [embed], ephemeral: true})
+            .then((message)=>setTimeout(()=>message.delete(),15000));
+
         console.log(interaction)
         console.log(e)
     }
