@@ -9,7 +9,7 @@ const Rcon = require("rcon");
 
 // Create a new client instance
 const client = new Client({
-    intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]
+    intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_PRESENCES]
 });
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 const commands = [];
@@ -162,8 +162,12 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-client.on("guildMemberAdd", (member) => { // EventEmitter, nothing new
-    console.log(member.user.username);
+client.on("guildMemberAdd", async member => {
+    let role_id = config.BASIC_ROLE_ID;
+    let role = member.guild.roles.cache.find(r => r.id === role_id);
+    await member.roles.add(role);
+    let channel = client.channels.cache.get(config.WHITELIST_CHANNEL)
+    channel.send({content: `Привет, <@${member.user.id}>, добро пожаловать! :partying_face:`})
 
 });
 
