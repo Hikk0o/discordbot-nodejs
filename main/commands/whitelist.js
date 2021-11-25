@@ -3,7 +3,6 @@ const { MessageButton, MessageActionRow, MessageEmbed } = require("discord.js");
 const config = require('../config.json');
 
 module.exports = {
-
     data: new SlashCommandBuilder()
         .setName('whitelist')
         .setDescription('Добавляет вас в Whitelist сервера Minecraft.')
