@@ -5,7 +5,7 @@ const { Routes } = require('discord-api-types/v9');
 
 // Require the necessary discord.js classes
 const { Client, Intents, Collection, MessageActionRow, MessageButton, MessageEmbed} = require('discord.js');
-const Rcon = require("rcon");
+const Rcon = require('rcon');
 
 // Create a new client instance
 const client = new Client({
@@ -81,14 +81,15 @@ client.on('interactionCreate', async interaction => {
 
             let member = client.users.cache.get(interaction.user.id);
             let loading_message_id = (await member.send({embeds: [loading_embed], ephemeral: true})).id
-
-            let rcon = new Rcon(config.SERVER_IP, config.SERVER_PORT, config.SERVER_PASSWORD)
-            await rcon.on('auth', async function() {
+            let options = {
+                tcp: true       // false for UDP, true for TCP (default true)
+            };
+            ;
+            let rcon = new Rcon(config.SERVER_IP, config.SERVER_PORT, config.SERVER_PASSWORD, options).on('auth', function() {
                 console.log("Connection established");
-                await rcon.send(`bwl add ${interaction.message.embeds[0].title} ${interaction.user.id}`)
-
+                rcon.send(`bwl add ${interaction.message.embeds[0].title} ${interaction.user.id}`)
             }).on('response', function(str) {
-                console.log("Response: " + str);
+                console.log("response: " + str);
                 client.channels.cache.get(interaction.channel.id).messages.fetch(loading_message_id).then(message => message.delete());
 
                 if (str === `**\`${interaction.message.embeds[0].title}\`** уже находится в Whitelist.`) {
