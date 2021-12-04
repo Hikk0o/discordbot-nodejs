@@ -65,6 +65,24 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+client.on('messageCreate', async message => {
+    if (message.channel.id === config.WHITELIST_CHANNEL) {
+        if (message.author === client.user) return
+        let error_embed = new MessageEmbed()
+            .setColor('RED')
+            .setDescription(`:warning: **В этом канале можно писать только команды.**\n\nНе наботает команда? Попробуйте написать \`/whitelist\`, нажать \`TAB\` и дописать свой никнейм.\nЗа помощью можете обратиться в <#855427300832313374>.`)
+            .setFooter("Это сообщение исчезнет через 15 секунд")
+        await message.reply({
+            embeds: [error_embed],
+            ephemeral: true
+        }).then((message)=>setTimeout(()=>message.delete(),15000));
+        client.channels.cache.get(message.channel.id).messages.fetch(message.id).then(message => message.delete());
+
+    }
+
+
+});
+
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
 /*    console.log(interaction)

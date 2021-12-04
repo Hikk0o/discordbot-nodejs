@@ -11,6 +11,16 @@ module.exports = {
                 .setDescription('Ник в Minecraft')
                 .setRequired(true)),
     async execute(interaction, client) {
+        if (interaction.channel.id !== config.WHITELIST_CHANNEL) {
+            let error_embed = new MessageEmbed()
+                .setColor('RED')
+                .setDescription(`:warning: Этот канал не предназначен для этого.\nЭту команду можно прописать только в <#${config.WHITELIST_CHANNEL}>`)
+            interaction.reply({
+                embeds: [error_embed],
+                ephemeral: true
+            })
+            return
+        }
         let options = interaction.options._hoistedOptions
         let embed = new MessageEmbed()
             .setColor('ORANGE')
@@ -53,7 +63,7 @@ module.exports = {
             ephemeral: true
         })
         let member = client.users.cache.get(interaction.user.id);
-        member.send({ embeds: [embed], components: [rules] });
+        member.send({ embeds: [embed], components: [rules] })
 
         /*console.log('Pong!')*/
     }
