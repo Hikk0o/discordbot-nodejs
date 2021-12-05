@@ -185,7 +185,7 @@ client.on("guildMemberAdd", async member => {
     let role_id = config.BASIC_ROLE_ID;
     let role = member.guild.roles.cache.find(r => r.id === role_id);
     await member.roles.add(role);
-    let channel = client.channels.cache.get(config.WHITELIST_CHANNEL)
+    let channel = client.channels.cache.get(config.WELCOME_CHANNEL)
     channel.send({content: `Привет, <@${member.user.id}>, добро пожаловать! :partying_face:`})
 
 });
